@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookshelf</title>
+    <!-- jQuery CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header, footer {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+        }
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+        }
+        h2 {
+            color: #4CAF50;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 10px;
+        }
+        #bookshelfResults div {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        img {
+            max-width: 100px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        h3 {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>My Bookshelf</h1>
+</header>
+
+<main>
+    <nav>
+        <ul>
+            <li><a href="ms2.html">Home</a></li>
+            <li><a href="my-bookshelf.html">My Bookshelf</a></li>
+            <li><a href="index.html">Milestones</a></li>
+        </ul>
+    </nav>
+
+    <h2>Books on My Shelf</h2>
+
+    <!-- Placeholder for bookshelf results -->
+    <div id="bookshelfResults"></div>
+</main>
+
+<footer>
+    <p>Created by Evan Livsey</p>
+</footer>
+
+<!-- jQuery script to fetch bookshelf data -->
+<script>
+    $(document).ready(function() {
+        // Replace with your Google Books user ID and bookshelf ID
+        const userId = '104170332653755643916'
+        const shelfId = '1001'
+
+        // Google Books API URL to get books from the specific bookshelf
+        let apiURL = `https://www.googleapis.com/books/v1/users/${userId}/bookshelves/${shelfId}/volumes`;
+
+        $.getJSON(apiURL, function(data) {
+            let results = data.items;
+            $('#bookshelfResults').empty(); // Clear previous results
+
+            if (results) {
+                $.each(results, function(index, book) {
+                    let title = book.volumeInfo.title;
+                    let thumbnail = book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.smallThumbnail : 'https://via.placeholder.com/100';
+                    let bookId = book.id;  // Get the book's unique ID
+
+                    // Append each book as a div with an image and clickable title that links to book-details.html
+                    $('#bookshelfResults').append(`
+                        <div>
+                            <img src="${thumbnail}" alt="${title}">
+                            <h3><a href="book-details.html?id=${bookId}">${title}</a></h3>
+                        </div>
+                    `);
+                });
+            } else {
+                $('#bookshelfResults').html('<p>No books found on this shelf.</p>');
+            }
+        }).fail(function() {
+            $('#bookshelfResults').html('<p>Error loading bookshelf. Please try again later.</p>');
+        });
+    });
+</script>
+
+</body>
+</html>
