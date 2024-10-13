@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookshelf - Milestone 3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header, footer {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        nav ul li {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #bookshelfResults div {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            position: relative;
+        }
+        img {
+            max-width: 100px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        h3 {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        #pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #book-details {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>My Bookshelf</h1>
+    <nav>
+        <ul>
+            <li><a href="ms3.html">Home</a></li>
+            <li><a href="index.html">Milestone</a></li>
+            <li><a href="bookshelf.html">My Bookshelf</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <section id="bookshelf">
+        <h2>Books on My Shelf</h2>
+        <div id="bookshelfResults"></div>
+        <div id="pagination"></div>
+    </section>
+</main>
+
+<footer>
+    <p>Created by Evan Livsey</p>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        const userId = '104170332653755643916';  // Your Google Books User ID
+        const shelfId = '1001';  // Your Google Bookshelf ID
+        const resultsPerPage = 10;
+        const maxVisiblePages = 10;
+        let currentPage = 1;
+
+        // Fetch Books from Google Bookshelf
+        function fetchBooksFromBookshelf(page) {
+            const startIndex = (page - 1) * resultsPerPage;
+            const apiURL = `https://www.googleapis.com/books/v1/users/${userId}/bookshelves/${shelfId}/volumes?startIndex=${startIndex}&maxResults=${resultsPerPage}`;
+            
+            $.getJSON(apiURL, function(data) {
+                $('#bookshelfResults').empty();  // Clear previous results
+
+                if (data.items) {
+                    $.each(data.items, function(index, book) {
+                        let title = book.volumeInfo.title;
+                        let thumbnail = book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.smallThumbnail : 'https://via.placeholder.com/100';
+                        let bookId = book.id;
+
+                        $('#bookshelfResults').append(`
+                            <div class="book-entry" data-id="${bookId}">
+                                <img src="${thumbnail}" alt="${title}">
+                                <h3><a href="#" class="book-link" data-id="${bookId}">${title}</a></h3>
+                                <div id="book-details-${bookId}" class="book-details" style="display: none;"></div>
+                            </div>
+                        `);
+                    });
+
+                    setupPagination(data.totalItems, page);
+                } else {
+                    $('#bookshelfResults').html('<p>No books found on this shelf.</p>');
+                }
+            });
+        }
+
+        // Setup Pagination with 10 buttons at a time
+        function setupPagination(totalResults, currentPage) {
+            const totalPages = Math.ceil(totalResults / resultsPerPage);
+            const maxPagesToShow = Math.min(maxVisiblePages, totalPages);
+            $('#pagination').empty();  // Clear previous pagination
+
+            // Create navigation buttons
+            $('#pagination').append(`<button class="page-btn" data-page="1">First</button>`);
+            if (currentPage > 1) {
+                $('#pagination').append(`<button class="page-btn" data-page="${currentPage - 1}">Previous</button>`);
+            }
+
+            // Calculate start and end pages
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+
+            for (let i = startPage; i <= endPage; i++) {
+                $('#pagination').append(`<button class="page-btn" data-page="${i}">${i}</button>`);
+            }
+
+            if (currentPage < totalPages) {
+                $('#pagination').append(`<button class="page-btn" data-page="${currentPage + 1}">Next</button>`);
+            }
+            $('#pagination').append(`<button class="page-btn" data-page="${totalPages}">Last</button>`);
+
+            // Pagination Click Event
+            $('.page-btn').click(function() {
+                const page = $(this).data('page');
+                fetchBooksFromBookshelf(page);
+            });
+        }
+
+        // Fetch initial bookshelf
+        fetchBooksFromBookshelf(currentPage);
+
+        // Handle book click event to fetch and display book details
+        $(document).on('click', '.book-link', function(event) {
+            event.preventDefault();  // Prevent default anchor behavior
+            let bookId = $(this).data('id');
+            let bookDetailsDiv = $(`#book-details-${bookId}`);
+
+            // Hide all other book details
+            $('.book-details').slideUp();
+
+            if (bookDetailsDiv.is(':visible')) {
+                bookDetailsDiv.slideUp();  // Hide if already visible
+            } else {
+                fetchBookDetails(bookId, bookDetailsDiv);
+            }
+        });
+
+        // Fetch Book Details by ID
+        function fetchBookDetails(bookId, bookDetailsDiv) {
+            const apiURL = `https://www.googleapis.com/books/v1/volumes/${bookId}`;
+            
+            $.getJSON(apiURL, function(book) {
+                let details = book.volumeInfo;
+                let content = `
+                    <h3>${details.title}</h3>
+                    <p><strong>Author:</strong> ${details.authors ? details.authors.join(', ') : 'N/A'}</p>
+                    <p><strong>Publisher:</strong> ${details.publisher || 'N/A'}, ${details.publishedDate || 'N/A'}</p>
+                    <p><strong>Description:</strong> ${details.description || 'No description available.'}</p>
+                    <p><a href="${details.previewLink}" target="_blank">Preview this book</a></p>
+                `;
+                bookDetailsDiv.html(content).slideDown();  // Show the book details
+            }).fail(function() {
+                bookDetailsDiv.html('<p>Error loading book details. Please try again later.</p>').slideDown();
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

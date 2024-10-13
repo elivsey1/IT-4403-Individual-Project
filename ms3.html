@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Search - Milestone 3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header, footer {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        nav ul li {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #searchResults div {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        img {
+            max-width: 100px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        h3 {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        #pagination {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+        #pagination button {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        #pagination button:hover {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Book Search Application</h1>
+    <nav>
+        <ul>
+            <li><a href="ms3.html">Home</a></li>
+            <li><a href="bookshelf.html">My Bookshelf</a></li>
+            <li><a href="index.html">Milestone</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <section id="book-search">
+        <h2>Search for Books</h2>
+        <input type="text" id="searchTerm" placeholder="Enter a search term">
+        <button id="searchButton">Search</button>
+        <div id="searchResults"></div>
+        <div id="pagination"></div>
+    </section>
+</main>
+
+<footer>
+    <p>Created by Evan Livsey</p>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        let currentPage = 1;
+        const resultsPerPage = 10;
+        let totalPages = 0;
+        const maxPagesShown = 10; // Limit the number of visible page numbers to 10
+        
+        // Search Button Event Listener
+        $('#searchButton').click(function() {
+            let searchTerm = $('#searchTerm').val().trim();
+            if (!searchTerm) {
+                alert("Please enter a search term.");
+                return;
+            }
+            currentPage = 1;
+            fetchBooks(searchTerm, currentPage);
+        });
+
+        // Fetch Books from Google Books API
+        function fetchBooks(query, page) {
+            const startIndex = (page - 1) * resultsPerPage;
+            const apiURL = `https://www.googleapis.com/books/v1/volumes?q=${query}&startIndex=${startIndex}&maxResults=${resultsPerPage}`;
+            
+            $.getJSON(apiURL, function(data) {
+                $('#searchResults').empty();
+                if (data.items) {
+                    $.each(data.items, function(index, book) {
+                        let title = book.volumeInfo.title;
+                        let thumbnail = book.volumeInfo.imageLinks ? book.volumeInfo.imageLinks.smallThumbnail : 'https://via.placeholder.com/100';
+                        let bookId = book.id;
+
+                        $('#searchResults').append(`
+                            <div class="book-entry">
+                                <img src="${thumbnail}" alt="${title}">
+                                <h3><a href="#" class="book-link" data-id="${bookId}">${title}</a></h3>
+                                <div class="book-details" id="details-${bookId}"></div>
+                            </div>
+                        `);
+                    });
+                    totalPages = Math.ceil(data.totalItems / resultsPerPage);
+                    setupPagination(query, totalPages, page);
+                } else {
+                    $('#searchResults').html('<p>No results found.</p>');
+                }
+            });
+        }
+
+        // Setup Pagination
+        function setupPagination(query, totalPages, currentPage) {
+            $('#pagination').empty();
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesShown / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesShown - 1);
+
+            if (startPage > 1) {
+                $('#pagination').append(`<button class="page-btn" data-page="1">First</button>`);
+                $('#pagination').append(`<button class="page-btn" data-page="${currentPage - 1}">Previous</button>`);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                let activeClass = i === currentPage ? 'active' : '';
+                $('#pagination').append(`<button class="page-btn ${activeClass}" data-page="${i}">${i}</button>`);
+            }
+
+            if (endPage < totalPages) {
+                $('#pagination').append(`<button class="page-btn" data-page="${currentPage + 1}">Next</button>`);
+                $('#pagination').append(`<button class="page-btn" data-page="${totalPages}">Last</button>`);
+            }
+
+            // Pagination Click Event
+            $('.page-btn').click(function() {
+                const page = $(this).data('page');
+                fetchBooks(query, page);
+            });
+        }
+
+        // Handle book click event to fetch and display book details
+        $(document).on('click', '.book-link', function(event) {
+            event.preventDefault(); // Prevent default anchor behavior
+            let bookId = $(this).data('id');
+            fetchBookDetails(bookId);
+        });
+
+        // Fetch Book Details by ID
+        function fetchBookDetails(bookId) {
+            const apiURL = `https://www.googleapis.com/books/v1/volumes/${bookId}`;
+            
+            $.getJSON(apiURL, function(book) {
+                let details = book.volumeInfo;
+                let content = `
+                    <h3>${details.title}</h3>
+                    <p><strong>Author:</strong> ${details.authors ? details.authors.join(', ') : 'N/A'}</p>
+                    <p><strong>Publisher:</strong> ${details.publisher || 'N/A'}, ${details.publishedDate || 'N/A'}</p>
+                    <p><strong>Description:</strong> ${details.description || 'No description available.'}</p>
+                    <p><a href="${details.previewLink}" target="_blank">Preview this book</a></p>
+                `;
+                $('.book-details').slideUp();
+                $(`#details-${bookId}`).html(content).slideDown();
+            }).fail(function() {
+                $(`#details-${bookId}`).html('<p>Error loading book details. Please try again later.</p>').slideDown();
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
