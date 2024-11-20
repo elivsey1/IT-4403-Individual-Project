@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milestone 4 - Book Search Application</title>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header, footer {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+        }
+        nav ul li {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+        main {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #viewToggle {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #searchResults {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        #searchResults.grid-view .book-entry {
+            display: inline-block;
+            width: 200px;
+        }
+        #searchResults.list-view .book-entry {
+            display: block;
+            width: 100%;
+        }
+        .book-entry {
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #fff;
+            text-align: center;
+        }
+        img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+        h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .save-to-bookshelf {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .save-to-bookshelf:hover {
+            background-color: #45a049;
+        }
+        #pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #book-details {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            display: none; /* Initially hidden */
+        }
+        #detailsContent h3 {
+            margin-bottom: 10px;
+        }
+        #detailsContent p {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Book Search Application</h1>
+        <nav>
+            <ul>
+                <li><a href="#" id="homeLink">Home</a></li>
+                <li><a href="#" id="bookshelfLink">Bookshelf</a></li>
+                <li><a href="index.html" id="Milestones">Milestones</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="book-search">
+            <h2>Search for Books</h2>
+            <input type="text" id="searchTerm" placeholder="Enter a search term">
+            <button id="searchButton">Search</button>
+            <div id="viewToggle">
+                <button id="gridView">Grid View</button>
+                <button id="listView">List View</button>
+            </div>
+            <div id="searchResults" class="grid-view"></div>
+            <div id="pagination"></div>
+        </section>
+
+        <section id="book-details">
+            <h2>Book Details</h2>
+            <div id="detailsContent"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Created by Evan Livsey</p>
+    </footer>
+
+    <!-- Link to JavaScript file -->
+    <script src="ms4.js"></script>
+</body>
+</html>
